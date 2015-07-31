@@ -172,10 +172,11 @@ function localizeDeclValue(valueNode, context) {
   });
   return newValueNode;
 }
-
+var cache = {};
+var rAnimationName = /animation(-name)?$/;
 function localizeDecl(decl, context) {
-  var valuesNode = Tokenizer.parseValues(decl.value);
-  var localizeName = /animation(-name)?$/.test(decl.prop);
+  var valuesNode = cache[decl.value] || (cache[decl.value] = Tokenizer.parseValues(decl.value) );
+  var localizeName = rAnimationName.test(decl.prop);
   var newValuesNode = Object.create(valuesNode);
   newValuesNode.nodes = valuesNode.nodes.map(function(valueNode) {
     var subContext = {
@@ -188,6 +189,7 @@ function localizeDecl(decl, context) {
   decl.value = Tokenizer.stringifyValues(newValuesNode);
 }
 
+var selCache = {};
 module.exports = postcss.plugin('postcss-modules-local-by-default', function (options) {
   if(options && options.mode) {
     if(options.mode !== "global" && options.mode !== "local" && options.mode !== "pure") {
@@ -227,7 +229,8 @@ module.exports = postcss.plugin('postcss-modules-local-by-default', function (op
         // ignore keyframe rules
         return;
       }
-      var selector = Tokenizer.parse(rule.selector);
+      var selector = selCache[rule.selector] || ( selCache[rule.selector] = Tokenizer.parse(rule.selector));
+      //var selector = Tokenizer.parse(rule.selector);
       var context = {
         options: options,
         global: globalMode,
